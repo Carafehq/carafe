@@ -1,0 +1,42 @@
+{
+  "v1": {
+    "claude-code": {
+      "strictHits": 103,
+      "anyHits": 148,
+      "renderedHits": 140,
+      "middleStrictHits": 18,
+      "junk": 40,
+      "hazardViolations": 24,
+      "verbatimHits": 101
+    },
+    "codex": {
+      "strictHits": 85,
+      "anyHits": 145,
+      "renderedHits": 135,
+      "middleStrictHits": 13,
+      "junk": 38,
+      "hazardViolations": 22,
+      "verbatimHits": 83
+    }
+  },
+  "v2": {
+    "claude-code": {
+      "strictHits": 189,
+      "anyHits": 189,
+      "renderedHits": 182,
+      "middleStrictHits": 49,
+      "junk": 0,
+      "hazardViolations": 0,
+      "verbatimHits": 187
+    },
+    "codex": {
+      "strictHits": 189,
+      "anyHits": 189,
+      "renderedHits": 182,
+      "middleStrictHits": 49,
+      "junk": 0,
+      "hazardViolations": 0,
+      "verbatimHits": 187
+    }
+  }
+}

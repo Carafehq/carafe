@@ -1,0 +1,23 @@
+{
+  "name": "carafe",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "The continuity layer for AI coding agents \u2014 find, hand off, and replay your AI coding work across every tool.",
+  "type": "module",
+  "scripts": {
+    "spike": "bun run src/spike/capture-spike.ts",
+    "build": "bun run scripts/build.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test --timeout 30000"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^2.3.0",
+    "bun-pty": "^0.4.10"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "@types/node": "^26.1.0",
+    "typescript": "^5"
+  }
+}

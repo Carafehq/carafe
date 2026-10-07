@@ -1,0 +1,12 @@
+#!/bin/sh
+# Runs the CLI from the repo this script lives in — resolve $0 through symlinks
+# so `ln -s .../bin/carafe ~/.local/bin/carafe` works and survives a repo move.
+# (readlink -f is GNU-only; this loop is portable to macOS.)
+src=$0
+while [ -L "$src" ]; do
+  dir=$(cd -P "$(dirname "$src")" && pwd)
+  src=$(readlink "$src")
+  case $src in /*) ;; *) src=$dir/$src ;; esac
+done
+repo=$(cd -P "$(dirname "$src")/.." && pwd)
+exec bun "$repo/src/cli/index.ts" "$@"

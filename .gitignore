@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# spike output stays local — contains machine-specific paths
+SPIKE-REPORT.md
+
+# bun build --compile scratch files (left behind when a compile is interrupted)
+*.bun-build
+
+
+__pycache__/

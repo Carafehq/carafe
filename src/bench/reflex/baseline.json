@@ -1,0 +1,46 @@
+{
+  "claude-code": {
+    "shouldFire": 75,
+    "correctTurns": 67,
+    "knowToAskFailures": 8,
+    "silentTurns": 20,
+    "falseFires": 0,
+    "emitted": 132,
+    "correctEmitted": 81,
+    "suppressionPassed": 75,
+    "suppressionTotal": 75
+  },
+  "claude-code project": {
+    "shouldFire": 75,
+    "correctTurns": 67,
+    "knowToAskFailures": 8,
+    "silentTurns": 20,
+    "falseFires": 0,
+    "emitted": 137,
+    "correctEmitted": 85,
+    "suppressionPassed": 75,
+    "suppressionTotal": 75
+  },
+  "codex": {
+    "shouldFire": 76,
+    "correctTurns": 66,
+    "knowToAskFailures": 10,
+    "silentTurns": 20,
+    "falseFires": 0,
+    "emitted": 125,
+    "correctEmitted": 74,
+    "suppressionPassed": 76,
+    "suppressionTotal": 76
+  },
+  "codex project": {
+    "shouldFire": 76,
+    "correctTurns": 68,
+    "knowToAskFailures": 8,
+    "silentTurns": 20,
+    "falseFires": 0,
+    "emitted": 138,
+    "correctEmitted": 86,
+    "suppressionPassed": 76,
+    "suppressionTotal": 76
+  }
+}
