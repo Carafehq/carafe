@@ -72,7 +72,59 @@ key lives only in the parent and managed children; these archives become
 unreadable after all of them exit. `--handoff-storage disk` selects disk storage
 up front. Capture pauses and handoff is refused if storage fails.
 
+## Command line
+
+Everything the app and the skill do is a `carafe` command. The ones you will use:
+
+| Command | What it does |
+| --- | --- |
+| `carafe list` | Recent sessions across tools, newest first (`--tool codex`, `--interactive` to hide agent-spawned ones) |
+| `carafe search "<terms>"` | Ranked recall across every captured session; `--session <id>` searches inside one |
+| `carafe show <id> --seq A-B` | Print a section of a session's trace verbatim |
+| `carafe key-moments <id>` | The decisions, dead ends and breakthroughs of a session, with a copyable resume block |
+| `carafe ask <id> --file F` / `--failed` | Which chapters touched a file, what failed, which commands ran |
+| `carafe handoff <id\|latest\|current>` | Write a self-contained Markdown handoff and print the line to paste into the next agent |
+| `carafe handoff current --questions` | The seven questions the outgoing agent answers first, and where to save them |
+| `carafe ui` | The local browser UI: search, sessions, replay, hand off |
+| `carafe checkpoint <id>` / `carafe undo <id> --to-seq N` | Snapshot a worktree, or restore files to an earlier point (plan first, `--apply` to do it) |
+| `carafe service status` | Is background capture running, and which build runs it |
+| `carafe skills install` | Install the Claude Code skill and the Codex prompt (below) |
+| `carafe update` | Update the CLI from the release feed, checksums verified |
+
+`carafe --help` lists everything, including the live multiplexer (`carafe start`),
+the benchmarks and the maintenance commands. Every command reads the store; the
+only ones that change anything are `import`/`watch` (capture), `checkpoint`,
+`undo --apply`, `gc`, `skills`, `reflex install` and `update`.
+
+![carafe on the command line](docs/media/cli.gif)
+
+## The Claude Code and Codex skill
+
+`carafe skills install` gives your agents the same memory you have. It writes a
+`/carafe` skill for Claude Code (`~/.claude/skills/carafe/`) and a `/carafe`
+prompt for Codex (`~/.codex/prompts/carafe.md`); `carafe skills status` shows what
+is installed, `carafe skills uninstall` removes both.
+
+With it installed, an agent answers questions like these from the store instead
+of guessing:
+
+- "What did we decide about the retry queue last week?" → `carafe search`, then
+  `carafe show` for the exact turn.
+- "Pick up where the other session left off." → `carafe key-moments latest`.
+- "Hand this off." → the agent answers the seven handoff questions, saves them,
+  then runs `carafe handoff current`. The handoff then carries what the agent
+  knew *and* a machine-checked picture of the repositories right now.
+
+Typing `/carafe <command>` runs that command verbatim, so `/carafe list --tool
+codex` is exactly `carafe list --tool codex`. The skill only ever reads the store;
+it never pushes, deletes or deploys. After `carafe update`, run
+`carafe skills install` again to refresh the skill text.
+
+![the /carafe skill inside Claude Code](docs/media/skill.gif)
+
 ## macOS app
+
+![Hand Off from the menu bar](docs/media/menubar.gif)
 
 Download `Carafe-VERSION.zip` from
 [Releases](https://github.com/Carafehq/carafe/releases), extract it, and open
