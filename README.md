@@ -4,6 +4,32 @@ Carafe keeps your AI coding sessions available on your own machine.
 Find past work, replay its history, and hand context between Claude Code and Codex.
 Use the CLI, a local browser UI, or the macOS menu bar app.
 
+## Command line
+
+![carafe on the command line](docs/media/cli.gif)
+
+Everything carafe does, in the menu bar app and the agent skill too, is a `carafe` command. The ones you will use:
+
+| Command | What it does |
+| --- | --- |
+| `carafe list` | Recent sessions across tools, newest first (`--tool codex`, `--interactive` to hide agent-spawned ones) |
+| `carafe search "<terms>"` | Ranked recall across every captured session; `--session <id>` searches inside one |
+| `carafe show <id> --seq A-B` | Print a section of a session's trace verbatim |
+| `carafe key-moments <id>` | The decisions, dead ends and breakthroughs of a session, with a copyable resume block |
+| `carafe ask <id> --file F` / `--failed` | Which chapters touched a file, what failed, which commands ran |
+| `carafe handoff <id\|latest\|current>` | Write a self-contained Markdown handoff and print the line to paste into the next agent |
+| `carafe handoff current --questions` | The seven questions the outgoing agent answers first, and where to save them |
+| `carafe ui` | The local browser UI: search, sessions, replay, hand off |
+| `carafe checkpoint <id>` / `carafe undo <id> --to-seq N` | Snapshot a worktree, or restore files to an earlier point (plan first, `--apply` to do it) |
+| `carafe service status` | Is background capture running, and which build runs it |
+| `carafe skills install` | Install the Claude Code skill and the Codex prompt (below) |
+| `carafe update` | Update the CLI from the release feed, checksums verified |
+
+`carafe --help` lists everything, including the live multiplexer (`carafe start`),
+the benchmarks and the maintenance commands. Every command reads the store; the
+only ones that change anything are `import`/`watch` (capture), `checkpoint`,
+`undo --apply`, `gc`, `skills`, `reflex install` and `update`.
+
 ## 60-second quickstart
 
 Install the standalone binary (macOS or Linux; no Node or Bun required):
@@ -24,6 +50,17 @@ No token or GitHub account is needed. Releases and source are public.
 The installer verifies release checksums and installs to `~/.local/bin` (override
 with `--dir`). macOS and Linux, x64 and arm64 are supported, including Linux musl
 and x64 baseline builds. There is no Windows binary.
+
+## macOS app
+
+![Hand Off from the menu bar](docs/media/menubar.gif)
+
+Download `Carafe-VERSION.zip` from
+[Releases](https://github.com/Carafehq/carafe/releases), extract it, and open
+Carafe. The app offers session handoffs, capture status, and prompt reflex controls.
+The unsigned/ad-hoc signed app is not notarized: after attempting to open it,
+go to **System Settings → Privacy & Security → Open Anyway**, then confirm Open.
+Only do this for a download you trust. See [app documentation](apps/menubar/README.md).
 
 ## Supported tools
 
@@ -72,32 +109,6 @@ key lives only in the parent and managed children; these archives become
 unreadable after all of them exit. `--handoff-storage disk` selects disk storage
 up front. Capture pauses and handoff is refused if storage fails.
 
-## Command line
-
-Everything the app and the skill do is a `carafe` command. The ones you will use:
-
-| Command | What it does |
-| --- | --- |
-| `carafe list` | Recent sessions across tools, newest first (`--tool codex`, `--interactive` to hide agent-spawned ones) |
-| `carafe search "<terms>"` | Ranked recall across every captured session; `--session <id>` searches inside one |
-| `carafe show <id> --seq A-B` | Print a section of a session's trace verbatim |
-| `carafe key-moments <id>` | The decisions, dead ends and breakthroughs of a session, with a copyable resume block |
-| `carafe ask <id> --file F` / `--failed` | Which chapters touched a file, what failed, which commands ran |
-| `carafe handoff <id\|latest\|current>` | Write a self-contained Markdown handoff and print the line to paste into the next agent |
-| `carafe handoff current --questions` | The seven questions the outgoing agent answers first, and where to save them |
-| `carafe ui` | The local browser UI: search, sessions, replay, hand off |
-| `carafe checkpoint <id>` / `carafe undo <id> --to-seq N` | Snapshot a worktree, or restore files to an earlier point (plan first, `--apply` to do it) |
-| `carafe service status` | Is background capture running, and which build runs it |
-| `carafe skills install` | Install the Claude Code skill and the Codex prompt (below) |
-| `carafe update` | Update the CLI from the release feed, checksums verified |
-
-`carafe --help` lists everything, including the live multiplexer (`carafe start`),
-the benchmarks and the maintenance commands. Every command reads the store; the
-only ones that change anything are `import`/`watch` (capture), `checkpoint`,
-`undo --apply`, `gc`, `skills`, `reflex install` and `update`.
-
-![carafe on the command line](docs/media/cli.gif)
-
 ## The Claude Code and Codex skill
 
 `carafe skills install` gives your agents the same memory you have. It writes a
@@ -121,17 +132,6 @@ it never pushes, deletes or deploys. After `carafe update`, run
 `carafe skills install` again to refresh the skill text.
 
 ![the /carafe skill inside Claude Code](docs/media/skill.gif)
-
-## macOS app
-
-![Hand Off from the menu bar](docs/media/menubar.gif)
-
-Download `Carafe-VERSION.zip` from
-[Releases](https://github.com/Carafehq/carafe/releases), extract it, and open
-Carafe. The app offers session handoffs, capture status, and prompt reflex controls.
-The unsigned/ad-hoc signed app is not notarized: after attempting to open it,
-go to **System Settings → Privacy & Security → Open Anyway**, then confirm Open.
-Only do this for a download you trust. See [app documentation](apps/menubar/README.md).
 
 ## Updates and releases
 
