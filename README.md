@@ -1,7 +1,8 @@
 # Carafe
 
 Carafe keeps your AI coding sessions available on your own machine.
-Find past work, replay its history, and hand context between Claude Code and Codex.
+Find past work, replay its history, and hand off a session from Claude Code or Codex
+to any agent that can read a file: Claude Code, Codex, Cursor, Devin, and the rest.
 Use the CLI, a local browser UI, or the macOS menu bar app.
 
 ## Command line
@@ -64,10 +65,17 @@ Only do this for a download you trust. See [app documentation](apps/menubar/READ
 
 ## Supported tools
 
-| Tool | Local session capture | Session search and replay | Agent handoff |
+Handoffs **come from** the tools carafe records, and **go to** any agent:
+
+| Tool | Session capture | Search and replay | Hand off from it |
 | --- | --- | --- | --- |
 | Claude Code | Yes | Yes | Yes |
 | Codex | Yes | Yes | Yes |
+
+**Receiving a handoff needs nothing from carafe.** A handoff is a self-contained Markdown
+file, so any agent that can read a file picks it up: Claude Code, Codex, Cursor,
+Windsurf, Devin, Gemini CLI, or a chat window you attach it to. Paste the copied
+`Read <path> and continue the work` and the agent has the context.
 
 Carafe reads the structured session files these tools already write. Source
 session files are never modified. Prompt reflex hooks are optional; enable them
