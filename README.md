@@ -115,6 +115,28 @@ key lives only in the parent and managed children; these archives become
 unreadable after all of them exit. `--handoff-storage disk` selects disk storage
 up front. Capture pauses and handoff is refused if storage fails.
 
+## Why carafe's handoffs work
+
+**Built for sessions that max out.** When a session hits its limit, the agent only
+half-remembers its own early work: long sessions get compacted. Carafe builds the
+handoff from the full record on disk instead, so turn 3 counts as much as turn 3,000.
+
+- **Huge sessions become readable.** Our largest test was a 5-month session: over 25,000
+  events plus 338 subagent runs, a 128 MB record of more than 30 million tokens. It
+  became a 10K-token handoff in about 20 seconds: an
+  orientation, a directory of the work, the recent turns verbatim, and pointers to
+  fetch any exact moment with `carafe show --seq`. Nothing is thrown away; it just
+  isn't all pasted in.
+- **It checks what's true right now.** The handoff reads the repositories as they are:
+  branches, worktrees, uncommitted files, and what changed since the outgoing agent
+  wrote its notes.
+- **The outgoing agent's notes get fact-checked.** It answers seven questions (what is
+  live, what is half-done, what not to touch), and carafe checks every claim it can
+  against git, marking each one held, false, or unchecked.
+- **Collisions are flagged.** Other sessions working in the same repositories are
+  listed, so the next agent doesn't trample them.
+- **Secrets are masked** before the handoff is written.
+
 ## The Claude Code and Codex skill
 
 `carafe skills install` gives your agents the same memory you have. It writes a
