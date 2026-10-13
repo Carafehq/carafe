@@ -59,9 +59,8 @@ and x64 baseline builds. There is no Windows binary.
 Download `Carafe-VERSION.zip` from
 [Releases](https://github.com/Carafehq/carafe/releases), extract it, and open
 Carafe. The app offers session handoffs, capture status, and prompt reflex controls.
-The unsigned/ad-hoc signed app is not notarized: after attempting to open it,
-go to **System Settings → Privacy & Security → Open Anyway**, then confirm Open.
-Only do this for a download you trust. See [app documentation](apps/menubar/README.md).
+It is signed with a Developer ID and notarized by Apple, so it opens like any other
+app. See [app documentation](apps/menubar/README.md).
 
 ## Supported tools
 
