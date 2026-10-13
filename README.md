@@ -1,8 +1,7 @@
 # Carafe
 
-Carafe keeps your AI coding sessions available on your own machine.
-Find past work, replay its history, and hand off a session from Claude Code or Codex
-to any agent that can read a file: Claude Code, Codex, Cursor, Devin, and the rest.
+Carafe hands off work between coding agents: Claude Code to Codex, Codex to Devin, and more.
+It keeps every session on your own machine, so you can find past work and replay its history.
 Use the CLI, a local browser UI, or the macOS menu bar app.
 
 ## Command line
