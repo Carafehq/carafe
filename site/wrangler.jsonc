@@ -1,0 +1,11 @@
+// carafe.sh: a static site served from Cloudflare (Workers static assets).
+// Deploy from this folder: npx wrangler deploy
+{
+  "name": "carafe-site",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./public", "not_found_handling": "404-page" },
+  "routes": [
+    { "pattern": "carafe.sh", "custom_domain": true },
+    { "pattern": "www.carafe.sh", "custom_domain": true }
+  ]
+}

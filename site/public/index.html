@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>carafe — continuity layer for ai coding agents</title>
+<meta name="description" content="Carafe keeps your AI coding sessions on your own machine. Find past work, replay it, and hand a session from Claude Code or Codex to any agent. Open source, local-first.">
+<meta property="og:title" content="carafe — continuity layer for ai coding agents">
+<meta property="og:description" content="Keep every Claude Code and Codex session on your own machine. Search it, replay it, hand it off to any agent. Open source, local-first.">
+<meta property="og:url" content="https://carafe.sh">
+<meta property="og:image" content="https://carafe.sh/media/cli.gif">
+<meta name="theme-color" content="#ECEAE3">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+::selection { background: #d4d0c8; }
+
+:root {
+  --page:   #ECEAE3;
+  --sheet:  #F7F5EF;
+  --ink:    #1A1A1A;
+  --soft:   #55524B;
+  --faint:  #8A867C;
+  --border: rgba(26,26,26,0.18);
+  --red:    #B3402A;
+  --code:   #EFECE4;
+  --font:   "SF Mono","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --base:   14px;
+  --lh:     1.75;
+  --sp-h:   40px;
+}
+
+body {
+  background: var(--page);
+  font-family: var(--font);
+  font-size: var(--base);
+  line-height: var(--lh);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  padding: 40px 20px 60px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.sheet {
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--sheet);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 36px var(--sp-h) 48px;
+  overflow-x: hidden;
+}
+
+.prompt { color: var(--red); }
+.cmd    { color: var(--ink); font-weight: 600; }
+.out    { color: var(--soft); }
+.faint  { color: var(--faint); }
+.bold   { font-weight: 700; color: var(--ink); }
+.stamp  { color: var(--red); font-weight: 700; }
+.out, .faint, .bold, .cmdline, .nav-links { overflow-wrap: break-word; word-break: break-word; }
+
+.block  { margin-top: 1.75em; }
+.block2 { margin-top: 2.5em; }
+.indent { padding-left: 2ch; }
+
+.rule { display: flex; align-items: center; gap: 0.4ch; margin: 2.2em 0; user-select: none; overflow: hidden; }
+.rule-star { color: var(--red); flex-shrink: 0; }
+.rule-track { flex: 1 1 0; min-width: 0; border-bottom: 1px solid var(--faint); height: 0; }
+
+.cmdline { display: block; white-space: pre-wrap; }
+.cmdline .prompt { user-select: none; }
+
+a { color: inherit; text-decoration: none; }
+.link { color: var(--ink); border-bottom: 1px dotted var(--soft); }
+.link:hover { border-bottom-style: solid; }
+
+.nav-links a { color: var(--faint); border-bottom: 1px dotted transparent; transition: border-color .15s; white-space: nowrap; }
+.nav-links a:hover { border-bottom-color: var(--faint); }
+
+/* ===== CALLS TO ACTION ===== */
+.cta { display: grid; gap: 0.6em; }
+.cta-line {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  border-bottom: 1px dotted transparent; transition: border-bottom-color .15s;
+  max-width: fit-content;
+}
+.cta-line:hover { border-bottom-color: var(--soft); }
+.cta-cmd { white-space: nowrap; flex-shrink: 0; }
+.cta-comment { white-space: nowrap; padding-left: 2ch; }
+
+/* ===== INSTALL BOX with copy ===== */
+.copybox {
+  position: relative;
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.9em 1.1em;
+  padding-right: 5.5em;
+}
+.copybox code { display: block; white-space: pre; overflow-x: auto; font-family: var(--font); font-size: inherit; color: var(--ink); }
+.copybtn {
+  position: absolute; top: 0.6em; right: 0.6em;
+  font: inherit; font-size: 0.85em; color: var(--soft);
+  background: var(--sheet); border: 1px solid var(--border); border-radius: 3px;
+  padding: 0.15em 0.7em; cursor: pointer;
+}
+.copybtn:hover { color: var(--ink); border-color: var(--soft); }
+
+/* ===== DOWNLOAD BUTTON ===== */
+.dl {
+  display: inline-flex; align-items: baseline; gap: 1ch; flex-wrap: wrap;
+  background: var(--ink); color: var(--sheet);
+  border-radius: 4px; padding: 0.6em 1.1em; font-weight: 600;
+}
+.dl:hover { background: #000; }
+.dl .sub { color: #C9C5BB; font-weight: 400; }
+
+/* ===== PRE (ASCII) ===== */
+pre {
+  font-family: var(--font); font-size: var(--base); line-height: var(--lh);
+  color: var(--soft); white-space: pre; overflow-x: auto;
+  margin: 0 calc(-1 * var(--sp-h)); padding: 0 var(--sp-h);
+  max-width: calc(100% + 2 * var(--sp-h));
+}
+
+.diagram-narrow { display: none; }
+@media (max-width: 600px) {
+  .diagram-wide { display: none; }
+  .diagram-narrow { display: block; }
+}
+
+/* ===== MEDIA ===== */
+figure { margin-top: 1.5em; }
+figure img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--border); border-radius: 4px; background: #1e1e2e;
+}
+figcaption { margin-top: 0.5em; color: var(--faint); font-size: 0.9em; }
+
+/* ===== COMMAND LIST (table on desktop, stacked on phone) ===== */
+.cmds { display: grid; grid-template-columns: max-content 1fr; column-gap: 3ch; row-gap: 0.55em; margin-top: 1.5em; }
+.cmds dt { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.cmds dd { color: var(--soft); }
+
+/* ===== SUPPORT TABLE ===== */
+.support { margin-top: 1.5em; border-collapse: collapse; width: 100%; }
+.support th, .support td { text-align: left; padding: 0.35em 1.5ch 0.35em 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+.support th { color: var(--faint); font-weight: 400; }
+.support td.yes { color: var(--ink); }
+
+.cursor { display: inline-block; width: 0.6em; height: 1em; background: var(--ink); vertical-align: text-bottom; margin-left: 1px; animation: blink 1s step-end infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } html { scroll-behavior: auto; } }
+
+/* ── Tablet ≤768px ── */
+@media (max-width: 768px) {
+  :root { --base: 13.5px; }
+  body  { padding: 28px 16px 48px; }
+  .sheet { padding: 28px 28px 40px; --sp-h: 28px; }
+}
+
+/* ── Phone ≤600px: stack the command list ── */
+@media (max-width: 600px) {
+  .cmds { grid-template-columns: 1fr; row-gap: 0; }
+  .cmds dt { white-space: normal; margin-top: 0.9em; }
+  .cmds dd { padding-left: 2ch; }
+}
+
+/* ── Phone ≤520px ── */
+@media (max-width: 520px) {
+  :root { --base: 12.5px; }
+  body  { padding: 12px 8px 32px; }
+  .sheet { padding: 18px 16px 28px; --sp-h: 16px; }
+  pre   { font-size: 11.5px; }
+  .cta-comment { white-space: normal; padding-left: 2ch; flex-basis: 100%; }
+  .copybox { padding-right: 1.1em; padding-top: 2.6em; }
+  .support th:nth-child(3), .support td:nth-child(3) { display: none; }
+}
+
+/* ── Small phone ≤380px ── */
+@media (max-width: 380px) {
+  :root { --base: 12px; }
+  body  { padding: 8px 6px 24px; }
+  .sheet { padding: 14px 12px 24px; --sp-h: 12px; }
+  pre   { font-size: 10.5px; }
+}
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <!-- ===== TOP ===== -->
+  <header id="top">
+    <span class="cmdline faint"><span class="prompt">~/dev $</span> <span class="cmd">carafe --version</span></span>
+    <span class="cmdline out block">carafe 0.1.0 · open source · macOS and Linux</span>
+    <nav class="block nav-links faint">
+      # <a href="#cli">[command line]</a>  <a href="#install">[install]</a>  <a href="#app">[mac app]</a>  <a href="#tools">[tools]</a>  <a href="#skill">[skill]</a>  <a href="#privacy">[privacy]</a>  <a href="https://github.com/Carafehq/carafe">[github]</a>
+    </nav>
+    <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+  </header>
+
+  <!-- ===== ABOUT ===== -->
+  <section id="about">
+    <span class="cmdline"><span class="prompt">~/dev $</span> <span class="cmd">carafe --about</span></span>
+
+    <div class="block">
+      <span class="cmdline bold">Carafe keeps your AI coding sessions on your own machine.</span>
+      <span class="cmdline out">Find past work, replay its history, and hand off a session from Claude Code or Codex to any agent that can read a file.</span>
+    </div>
+
+    <div class="block">
+<pre class="diagram-wide" aria-label="Claude Code and Codex sessions go into the carafe store on your disk, which writes a handoff.md that any agent can read">  claude code ──┐
+                ├──▶ [carafe store] ──▶ handoff.md ──▶ any agent
+  codex ────────┘      on your disk                    claude code · codex
+                                                       cursor · devin · …</pre>
+<pre class="diagram-narrow" aria-hidden="true">  claude code ──┐
+  codex ────────┤
+                ▼
+         [carafe store]
+          on your disk
+                │
+                ▼
+           handoff.md
+                │
+                ▼
+           any agent
+  claude code · codex · cursor · …</pre>
+    </div>
+
+    <div class="block cta">
+      <a href="#install" class="cta-line"><span class="cta-cmd"><span class="prompt">$</span> <span class="cmd">curl -fsSL …/install.sh | sh</span></span><span class="cta-comment faint"># install the cli</span></a>
+      <a href="https://github.com/Carafehq/carafe/releases/download/v0.1.0/Carafe-0.1.0.zip" class="cta-line"><span class="cta-cmd"><span class="prompt">$</span> <span class="cmd">open Carafe-0.1.0.zip</span></span><span class="cta-comment faint"># download the mac app</span></a>
+      <a href="https://github.com/Carafehq/carafe" class="cta-line"><span class="cta-cmd"><span class="prompt">$</span> <span class="cmd">git clone carafe</span></span><span class="cta-comment faint"># read the source</span></a>
+    </div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== COMMAND LINE ===== -->
+  <section id="cli">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe --help</span></span>
+
+    <figure>
+      <img src="media/cli.gif" width="1200" height="600" loading="lazy" alt="carafe list, carafe search finding the right session, and carafe handoff writing a handoff for any agent">
+      <figcaption># list → search → handoff</figcaption>
+    </figure>
+
+    <div class="block out">Everything carafe does, in the menu bar app and the agent skill too, is a <span class="cmd">carafe</span> command. The ones you will use:</div>
+
+    <dl class="cmds">
+      <dt>carafe list</dt><dd>Recent sessions across tools, newest first</dd>
+      <dt>carafe search "&lt;terms&gt;"</dt><dd>Ranked recall across every captured session</dd>
+      <dt>carafe show &lt;id&gt; --seq A-B</dt><dd>A section of a session's trace, verbatim</dd>
+      <dt>carafe key-moments &lt;id&gt;</dt><dd>Decisions, dead ends and breakthroughs, with a resume block</dd>
+      <dt>carafe ask &lt;id&gt; --file F</dt><dd>Which chapters touched a file, what failed, which commands ran</dd>
+      <dt>carafe handoff &lt;id&gt;</dt><dd>A self-contained Markdown handoff, and the line to paste into the next agent</dd>
+      <dt>carafe ui</dt><dd>The local browser UI: search, sessions, replay, hand off</dd>
+      <dt>carafe checkpoint / undo</dt><dd>Snapshot a worktree, or restore files to an earlier point</dd>
+      <dt>carafe skills install</dt><dd>The Claude Code skill and the Codex prompt</dd>
+      <dt>carafe update</dt><dd>Update the CLI, checksums verified</dd>
+    </dl>
+
+    <div class="block faint"># carafe --help lists everything else. Every command only reads, except capture, checkpoint, undo --apply, gc, skills, reflex install and update.</div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== INSTALL ===== -->
+  <section id="install">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe quickstart</span></span>
+
+    <div class="block out">Install the standalone binary (macOS or Linux; no Node or Bun required):</div>
+
+    <div class="block copybox">
+      <button class="copybtn" type="button" data-copy="install">copy</button>
+      <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/Carafehq/carafe/main/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+carafe list
+carafe ui</code>
+    </div>
+
+    <div class="block out">Installing starts local background capture; use <span class="cmd">--no-watcher</span> to opt out, or <span class="cmd">carafe service disable</span> to stop it. No account or token needed. The installer verifies checksums. macOS and Linux, x64 and arm64.</div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== MAC APP ===== -->
+  <section id="app">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe app</span></span>
+
+    <figure>
+      <img src="media/menubar.gif" width="1100" height="441" loading="lazy" alt="The Carafe menu bar: Hand Off, From Codex, pick a session, and the handoff ready window">
+      <figcaption># hand off from the menu bar</figcaption>
+    </figure>
+
+    <div class="block out">The menu bar app shows capture status and hands off any session in two clicks: <span class="cmd">Hand Off → From Claude Code / From Codex → session</span>. The line to paste into the next agent is copied for you.</div>
+
+    <div class="block">
+      <a class="dl" href="https://github.com/Carafehq/carafe/releases/download/v0.1.0/Carafe-0.1.0.zip">⬇ Download Carafe for macOS <span class="sub">0.1.0 · universal</span></a>
+    </div>
+    <div class="block faint"># signed and notarized by Apple · unzip and open · the CLI is built in</div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== TOOLS ===== -->
+  <section id="tools">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe tools</span></span>
+
+    <div class="block out">Handoffs <span class="bold">come from</span> the tools carafe records, and <span class="bold">go to</span> any agent:</div>
+
+    <table class="support">
+      <thead><tr><th>tool</th><th>capture</th><th>search &amp; replay</th><th>hand off from it</th></tr></thead>
+      <tbody>
+        <tr><td class="yes">Claude Code</td><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+        <tr><td class="yes">Codex</td><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+      </tbody>
+    </table>
+
+    <div class="block out"><span class="bold">Receiving a handoff needs nothing from carafe.</span> A handoff is a self-contained Markdown file, so any agent that can read a file picks it up: Claude Code, Codex, Cursor, Windsurf, Devin, Gemini CLI, or a chat window you attach it to.</div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== SKILL ===== -->
+  <section id="skill">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe skills install</span></span>
+
+    <div class="block out">Gives your agents the same memory you have: a <span class="cmd">/carafe</span> skill for Claude Code and a <span class="cmd">/carafe</span> prompt for Codex. With it, an agent answers from the store instead of guessing:</div>
+
+    <div class="block indent out">
+      <span class="cmdline"><span class="prompt">*</span> "What did we decide about the retry queue last week?"</span>
+      <span class="cmdline"><span class="prompt">*</span> "Pick up where the other session left off."</span>
+      <span class="cmdline"><span class="prompt">*</span> "Hand this off."</span>
+    </div>
+
+    <figure>
+      <img src="media/skill.gif" width="1200" height="680" loading="lazy" alt="Claude Code running /carafe search and pointing to the session where the fix was found">
+      <figcaption># /carafe inside Claude Code</figcaption>
+    </figure>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== PRIVACY ===== -->
+  <section id="privacy">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe status</span></span>
+    <div class="block indent">
+      <span class="cmdline stamp">[never transmits]</span>
+      <span class="cmdline out">Carafe is local-first. Your sessions stay on your machine, under ~/.carafe.</span>
+      <span class="cmdline out">Secret-shaped text is masked before anything leaves the store.</span>
+      <span class="cmdline out">Source session files are only read, never changed.</span>
+      <span class="cmdline out">Update checks ask GitHub for the latest version and send no session content.</span>
+    </div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <!-- ===== OPEN SOURCE ===== -->
+  <section id="oss">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">carafe --license</span></span>
+    <div class="block out">Apache-2.0. Read it, build it, change it: <a class="link" href="https://github.com/Carafehq/carafe">github.com/Carafehq/carafe</a></div>
+    <div class="block faint"># Carafe Pro adds person-to-person sharing, PR stories and decision ledgers.</div>
+  </section>
+
+  <div class="rule"><span class="rule-star">*</span><span class="rule-track"></span></div>
+
+  <footer id="footer">
+    <span class="cmdline"><span class="prompt">$</span> <span class="cmd">exit</span></span>
+    <div class="block faint"># carafe 0.1.0 · <a class="link" href="https://github.com/Carafehq/carafe">github</a> · <a class="link" href="https://github.com/Carafehq/carafe/releases">releases</a></div>
+    <div class="block out">Your agents' work, kept on your machine.<span class="cursor"></span></div>
+  </footer>
+
+</main>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    var t = document.getElementById(a.getAttribute('href').slice(1));
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+document.querySelectorAll('.copybtn').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var text = document.getElementById('install-cmd').innerText;
+    var done = function () { b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+  });
+});
+</script>
+</body>
+</html>
